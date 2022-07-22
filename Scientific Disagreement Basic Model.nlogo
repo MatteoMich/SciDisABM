@@ -18,7 +18,7 @@ to setup
   create-turtles number-of-agents[
     set player-belief 0.5 ; probability that each agent assigns to the possibility of X_1 being the true class of the world. Notably, X_1 is the true class of the world.
 
-    set biased-d_1_given_x_1 ifelse-value random-float 1 > 0.5 [0.5 + random-float initial-distance-diag-value ][ 0.5 - random-float initial-distance-diag-value] ; The value that agent i assigns to D_1 | X_1. This formula
+    set biased-d_1_given_x_1 ifelse-value random-float 1 > 0.5 [d_1_given_x_1 + random-float initial-distance-diag-value ][ d_1_given_x_1 - random-float initial-distance-diag-value] ; The value that agent i assigns to D_1 | X_1. This formula
     ;makes sure that the value is drawn from an uniform distribution centered around 0.5, with lowest point 0.5 - initial-distance-diag-value, and highest 0.5 + initial-distance-diag-value.
 
     set agent-epsilon epsilon ;Each agent has the same epsilon.
