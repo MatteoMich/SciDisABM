@@ -4,30 +4,28 @@
 ; However, the agents do not agree and may be mistaken about the correlation of X_1 and D_1 and D_2. In particular, there exists a true value for P(D_1 | X_1) which is selected as
 ; a parameter, i.e. d_1_given_x_1. And, then every agent may assign a different value to this link, i.e. biased-d_1_given_x_1.
 
-
+extensions[nw]
 turtles-own [player-belief biased-d_1_given_x_1 new-biased-d_1_given_x_1 number-of-influencers personal-evidence-piece agent-epsilon
   personal-successes-drawn ]
 
-globals[evidence final-result]
+globals[evidence final-result d_1_given_x_2 percentage-of-correct-scientists]
 
 ;Globals and and individual variables will be explained when met inside the model.
 
 to setup
   ca
+  reset-ticks
+  set d_1_given_x_2 1 - d_1_given_x_1
   set evidence [] ; the vector of all the pieces of evidence that have been drawn from the beginning. It does not have any use in the model, it serves as a monitor.
-  create-turtles number-of-agents[
+  nw:generate-random turtles links number-of-agents connection-probability [
     set player-belief 0.5 ; probability that each agent assigns to the possibility of X_1 being the true class of the world. Notably, X_1 is the true class of the world.
-
-    set biased-d_1_given_x_1 ifelse-value random-float 1 > 0.5 [d_1_given_x_1 + random-float initial-distance-diag-value ][ d_1_given_x_1 - random-float initial-distance-diag-value] ; The value that agent i assigns to D_1 | X_1. This formula
-    ;makes sure that the value is drawn from an uniform distribution centered around 0.5, with lowest point 0.5 - initial-distance-diag-value, and highest 0.5 + initial-distance-diag-value.
-
+    if initial-distance-diag-value + d_1_given_x_1 > 1 [set initial-distance-diag-value 1 - d_1_given_x_1]
+    if d_1_given_x_1 - initial-distance-diag-value < 0 [set initial-distance-diag-value  d_1_given_x_1]
+    set biased-d_1_given_x_1 ifelse-value random-float 1 > 0.5 [d_1_given_x_1 + random-float initial-distance-diag-value ][ d_1_given_x_1 - random-float initial-distance-diag-value]
+    ; The value that agent i assigns to D_1 | X_1. If we have wisdom of the crowd we want to make sure that the mean of the agents is around the real value.
+    ; For this reason we need also to make sure that the superior and the inferior limit go below or above 1 and 0.
     set agent-epsilon epsilon ;Each agent has the same epsilon.
   ]
-  if network = "Cycle" [cycle]
-  if network = "Wheel" [wheel]
-  if network = "Complete" [complete]
-  ;The Networks are built.
-  reset-ticks
 end
 
 to go
@@ -110,10 +108,6 @@ to influence-each-other
   ask turtles [
     ;Here, we are assigning the new-value to P(D_1|X_1) after the numbers have been divided by the sum of all the influencers.
     set biased-d_1_given_x_1 ( new-biased-d_1_given_x_1 / number-of-influencers)
-    let perceived-value d_1_given_x_1 + ifelse-value .5 > random-float 1 [random-float reality-noise][random-float (- reality-noise)]
-    if perceived-value > 1 [set perceived-value 1]
-    if perceived-value < 0 [set perceived-value 0]
-    set biased-d_1_given_x_1 (influence-from-reality * perceived-value) + ((1 - influence-from-reality) * biased-d_1_given_x_1)
   ]
 end
 
@@ -136,7 +130,6 @@ to-report stable
   report reporter
 end
 
-
 to-report is-right
   report ifelse-value player-belief > .99 [True][False]
 end
@@ -155,6 +148,7 @@ to generate-result
       set final-result "Polarization"
     ]
   ]
+  set percentage-of-correct-scientists ( count turtles with [player-belief > 0.9] / number-of-agents)
 end
 
 to-report consensus  [x]
@@ -172,49 +166,6 @@ end
 
 to-report random-binomial [n p]
   report reduce + (n-values n [ifelse-value (p > random-float 1) [1] [0]])
-end
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;NETWORKS;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-to cycle
-  let degree 2
-  ask turtles [set size 1.2]
-  ifelse ((degree mod 2) != 0 ) or (degree > number-of-agents )
-  [
-    user-message "Degree error"
-  ]
-  [
-    let i 1
-    while [2 * i <= degree ]
-    [
-      let n 0
-      while [n < count turtles] [
-        ask turtle n [create-link-with turtle ( (n + i) mod count turtles) ]
-        set n n + 1
-      ]
-      set i i + 1
-    ]
-  ]
-  layout-circle sort turtles 14
-end
-
-to wheel
-  ask turtle 0 [create-links-with other turtles]
-  ask turtles [set size 1.2]
-  let n 1
-  while [n < count turtles] [
-    ask turtle n [create-link-with turtle ( (n mod (count turtles - 1)) + 1)  ]
-    set n n + 1
-  ]
-  let outside (turtle-set turtles with [who > 0])
-  layout-circle sort outside 15
-end
-
-to complete
-  ask turtles [create-links-with other turtles]
-  ask turtles [set size 1.2]
-  layout-circle turtles 14
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -262,10 +213,10 @@ NIL
 1
 
 BUTTON
-13
-132
-76
-165
+14
+130
+77
+163
 NIL
 go
 T
@@ -302,7 +253,7 @@ number-of-agents
 number-of-agents
 0
 100
-100.0
+25.0
 1
 1
 NIL
@@ -310,14 +261,14 @@ HORIZONTAL
 
 SLIDER
 10
-322
+285
 182
-355
+318
 epsilon
 epsilon
 0
 1
-1.0
+0.66
 0.01
 1
 NIL
@@ -444,61 +395,6 @@ PENS
 "pen-25" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 25"
 
 SLIDER
-12
-173
-184
-206
-influence-from-reality
-influence-from-reality
-0
-1
-0.1
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-285
-183
-318
-reality-noise
-reality-noise
-0
-1
-1.0
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-248
-183
-281
-d_1_given_x_2
-d_1_given_x_2
-0
-1
-0.59
-0.01
-1
-NIL
-HORIZONTAL
-
-CHOOSER
-11
-358
-149
-403
-network
-network
-"Cycle" "Complete" "Wheel"
-1
-
-SLIDER
 11
 406
 183
@@ -540,7 +436,7 @@ initial-distance-diag-value
 initial-distance-diag-value
 0
 1
-0.48
+0.38
 0.01
 1
 NIL
@@ -571,6 +467,21 @@ evidence
 17
 1
 11
+
+SLIDER
+10
+250
+182
+283
+connection-probability
+connection-probability
+0
+1
+0.2
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
