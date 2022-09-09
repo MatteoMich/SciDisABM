@@ -5,10 +5,15 @@
 ; a parameter, i.e. d_1_given_x_1. And, then every agent may assign a different value to this link, i.e. biased-d_1_given_x_1.
 
 extensions[nw]
-turtles-own [player-belief biased-d_1_given_x_1 new-biased-d_1_given_x_1 number-of-influencers personal-evidence-piece agent-epsilon
+turtles-own [player-belief
+  biased-d_1_given_x_1
+  new-biased-d_1_given_x_1
+  number-of-influencers
+  personal-evidence-piece
+  agent-epsilon
   personal-successes-drawn ]
 
-globals[evidence final-result d_1_given_x_2 percentage-of-correct-scientists]
+globals[d_1_given_x_2]
 
 ;Globals and and individual variables will be explained when met inside the model.
 
@@ -16,26 +21,31 @@ to setup
   ca
   reset-ticks
   set d_1_given_x_2 1 - d_1_given_x_1
-  set evidence [] ; the vector of all the pieces of evidence that have been drawn from the beginning. It does not have any use in the model, it serves as a monitor.
   nw:generate-random turtles links number-of-agents connection-probability [
-    set player-belief 0.5 ; probability that each agent assigns to the possibility of X_1 being the true class of the world. Notably, X_1 is the true class of the world.
+    set player-belief 0.5                            ; probability that each agent assigns to the possibility of X_1 being the true class of the world. Notably, X_1 is the true class of the world.
     if initial-distance-diag-value + d_1_given_x_1 > 1 [set initial-distance-diag-value 1 - d_1_given_x_1]
     if d_1_given_x_1 - initial-distance-diag-value < 0 [set initial-distance-diag-value  d_1_given_x_1]
     set biased-d_1_given_x_1 ifelse-value random-float 1 > 0.5 [d_1_given_x_1 + random-float initial-distance-diag-value ][ d_1_given_x_1 - random-float initial-distance-diag-value]
+
     ; The value that agent i assigns to D_1 | X_1. If we have wisdom of the crowd we want to make sure that the mean of the agents is around the real value.
     ; For this reason we need also to make sure that the superior and the inferior limit go below or above 1 and 0.
+    set xcor ifelse-value random-float 1 >= 0.5 [random -16][random 16]
+    set ycor ifelse-value random-float 1 >= 0.5 [random -16][random 16]
+    set color red
+    set size 1.5
+    set shape "circle"
     set agent-epsilon epsilon ;Each agent has the same epsilon.
   ]
 end
 
 to go
+  tick
   ;The Go procedure is composed of three parts. 1) Agents draw evidence and update their factual Beliefs. 2) Agents interact and update their Diagnostic Values.
   ;3) The program checks if the run is stable. If it is it generates results and then stops.
   draw-evidence-and-update-belief
   influence-each-other
-  tick
+
   if stable [
-    generate-result
     stop
   ]
 end
@@ -49,7 +59,6 @@ to draw-evidence-and-update-belief
 
   ifelse total-data-points > 0 [
     let total-successes-drawn random-binomial total-data-points (d_1_given_x_1)
-    set evidence lput total-successes-drawn evidence
     ask turtles [
       update-belief-multiple-draws total-successes-drawn total-data-points
     ]
@@ -84,6 +93,7 @@ to update-belief-multiple-draws [successes-drawn data-points]
   let p_D P_D_1 * player-belief + p_D_2 * (1 - player-belief) ; Calculate P(data). Law of total probability.
   ;if p_D < 0.0000000000000000000000001 [set P_D 0.000000000000000000000000000001]
   set player-belief (P_D_1 * player-belief / P_D)
+  set color (red + (5 * (player-belief - 0.5)))
 
 end
 
@@ -138,18 +148,22 @@ to-report is-wrong
   report ifelse-value player-belief < .01 [True][False]
 end
 
-to generate-result
-  ifelse consensus 1 [
-    set final-result "True-Consensus"
-  ][
-    ifelse consensus 2 [
-      set final-result "Wrong-Consensus"
-    ][
-      set final-result "Polarization"
+to-report final-result
+  let reporter "Polarization"
+  (ifelse  consensus 1 [
+    set reporter "True-Consensus"
     ]
-  ]
-  set percentage-of-correct-scientists ( count turtles with [player-belief > 0.9] / number-of-agents)
+    consensus 2 [
+      set reporter "Wrong-Consensus"
+    ]
+    [])
+  report reporter
 end
+
+to-report percentage-of-correct-scientists
+  report ( count turtles with [player-belief > 0.9] / number-of-agents)
+end
+
 
 to-report consensus  [x]
   let reporter True
@@ -169,10 +183,10 @@ to-report random-binomial [n p]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-880
-53
-1248
-422
+845
+10
+1300
+466
 -1
 -1
 10.91
@@ -185,10 +199,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+-20
+20
+-20
+20
 0
 0
 1
@@ -275,10 +289,10 @@ NIL
 HORIZONTAL
 
 PLOT
-277
-54
-599
-422
+240
+10
+585
+259
  Diagnostic Values of the First 25 Agents
 NIL
 NIL
@@ -324,10 +338,10 @@ PENS
 "pen-31" 1.0 0 -16777216 true "" ""
 
 MONITOR
-1142
-426
-1249
-471
+595
+264
+702
+309
 NIL
 final-result
 17
@@ -352,10 +366,10 @@ NIL
 0
 
 PLOT
-609
-55
-878
-422
+240
+263
+585
+521
 Factual Beliefs of the First 25 Agents
 NIL
 NIL
@@ -410,10 +424,10 @@ NIL
 HORIZONTAL
 
 PLOT
-880
-54
-1249
-422
+595
+10
+838
+256
 Number of "Correct" Agents
 NIL
 NIL
@@ -456,17 +470,6 @@ total-data-points
 1
 NIL
 HORIZONTAL
-
-MONITOR
-277
-428
-1137
-473
-NIL
-evidence
-17
-1
-11
 
 SLIDER
 10
