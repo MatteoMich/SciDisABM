@@ -2,16 +2,18 @@
 ; They are making an experiment in order to find which one is it. The experiment has two possible outcomes: D_1 and D_2. Notably, P(D_1|X_i) + P(D_2|X_i) = 1 for all X_i.
 ; All the agents know which is the correlation between X_2 and D_1, D_2. In particular, P(D_1 | X_2) is expressed by d_1_given_x_2.
 ; However, the agents do not agree and may be mistaken about the correlation of X_1 and D_1 and D_2. In particular, there exists a true value for P(D_1 | X_1) which is selected as
-; a parameter, i.e. d_1_given_x_1. And, then every agent may assign a different value to this link, i.e. biased-d_1_given_x_1.
+; a parameter, i.e. d_1_given_x_1. And, then every agent may assign a different value to this link, i.e. agent-diag-value.
 
-extensions[nw]
-turtles-own [player-belief
-  biased-d_1_given_x_1
-  new-biased-d_1_given_x_1
+extensions[rnd nw ]
+turtles-own [
+  agent-belief
+  agent-diag-value
+  new-agent-diag-value
   number-of-influencers
   personal-evidence-piece
   agent-epsilon
-  personal-successes-drawn ]
+  personal-successes-drawn
+]
 
 globals[d_1_given_x_2]
 
@@ -19,27 +21,29 @@ globals[d_1_given_x_2]
 
 to setup
   ca
-  reset-ticks
   set d_1_given_x_2 1 - d_1_given_x_1
+
   nw:generate-random turtles links number-of-agents connection-probability [
-    set player-belief 0.5                            ; probability that each agent assigns to the possibility of X_1 being the true class of the world. Notably, X_1 is the true class of the world.
-    if initial-distance-diag-value + d_1_given_x_1 > 1 [set initial-distance-diag-value 1 - d_1_given_x_1]
-    if d_1_given_x_1 - initial-distance-diag-value < 0 [set initial-distance-diag-value  d_1_given_x_1]
-    set biased-d_1_given_x_1 ifelse-value random-float 1 > 0.5 [d_1_given_x_1 + random-float initial-distance-diag-value ][ d_1_given_x_1 - random-float initial-distance-diag-value]
+
+    set agent-belief 0.5                            ; probability that each agent assigns to the possibility of X_1 being the true class of the world. Notably, X_1 is the true class of the world.
+    if initial-error-diag-value + d_1_given_x_1 > 1 [set initial-error-diag-value 1 - d_1_given_x_1]
+    if d_1_given_x_1 - initial-error-diag-value < 0 [set initial-error-diag-value  d_1_given_x_1]
+
+    set agent-diag-value (d_1_given_x_1 - initial-error-diag-value) + (random-float (2 * initial-error-diag-value)) ; We draw agent-diag-value from a uniform distribution.
 
     ; The value that agent i assigns to D_1 | X_1. If we have wisdom of the crowd we want to make sure that the mean of the agents is around the real value.
     ; For this reason we need also to make sure that the superior and the inferior limit go below or above 1 and 0.
     set xcor ifelse-value random-float 1 >= 0.5 [random -16][random 16]
     set ycor ifelse-value random-float 1 >= 0.5 [random -16][random 16]
     set color red
-    set size 1.5
+    set size 1
     set shape "circle"
     set agent-epsilon epsilon ;Each agent has the same epsilon.
   ]
+  reset-ticks
 end
 
 to go
-  tick
   ;The Go procedure is composed of three parts. 1) Agents draw evidence and update their factual Beliefs. 2) Agents interact and update their Diagnostic Values.
   ;3) The program checks if the run is stable. If it is it generates results and then stops.
   draw-evidence-and-update-belief
@@ -48,6 +52,10 @@ to go
   if stable [
     stop
   ]
+  if ticks > 20000 [
+    stop
+  ]
+  tick
 end
 
 to draw-evidence-and-update-belief
@@ -88,12 +96,15 @@ to update-belief-multiple-draws [successes-drawn data-points]
   ; The Update is Bayesian. First, we compute P(data| X_1) and P(data| X_2). Thus, we compute P (X_1| data) by decomposing it into P(data|X_1)*P(X_1) / P(data)
   ; Notably, to compute P(data| X_1) and P(data| X_2) we use the formula for binomial distribution. P(data|X_1) = (p^k) * ((1-p)^(n-k)), where k successes and n data points.
 
-  let p_D_1 ((biased-d_1_given_x_1 ) ^ successes-drawn) * ((1 - biased-d_1_given_x_1 ) ^ (data-points - successes-drawn))
+  let p_D_1 ((agent-diag-value ) ^ successes-drawn) * ((1 - agent-diag-value ) ^ (data-points - successes-drawn))
+
   let p_D_2 ((d_1_given_x_2 ) ^ successes-drawn) * (1 - d_1_given_x_2) ^ (data-points - successes-drawn)
-  let p_D P_D_1 * player-belief + p_D_2 * (1 - player-belief) ; Calculate P(data). Law of total probability.
-  ;if p_D < 0.0000000000000000000000001 [set P_D 0.000000000000000000000000000001]
-  set player-belief (P_D_1 * player-belief / P_D)
-  set color (red + (5 * (player-belief - 0.5)))
+
+  let p_D P_D_1 * agent-belief + p_D_2 * (1 - agent-belief) ; Calculate P(data). Law of total probability.
+
+  set agent-belief (P_D_1 * agent-belief / P_D)
+
+  set color (red + (5 * (agent-belief - 0.5)))
 
 end
 
@@ -104,32 +115,33 @@ to influence-each-other
   ; First, we sum the all the values an agent is influenced from and the number of influencers...
 
   ask turtles [
-    set new-biased-d_1_given_x_1 biased-d_1_given_x_1
+    set new-agent-diag-value agent-diag-value
     set number-of-influencers 1
     foreach [self] of link-neighbors with [condition-verified myself] [i ->
-      set new-biased-d_1_given_x_1 new-biased-d_1_given_x_1 + [biased-d_1_given_x_1] of i
+      set new-agent-diag-value new-agent-diag-value + [agent-diag-value] of i
       set number-of-influencers number-of-influencers + 1
     ]
   ]
 
-  ;... then we compute the perceived value of reality (real value + (reality noise)) and we update biased-d_1_given_x_1 following the formula:
+  ;... then we compute the perceived value of reality (real value + (reality noise)) and we update agent-diag-value following the formula:
   ; (1 - alpha)(value-from-others) + (alpha)(value-from-reality).
 
   ask turtles [
     ;Here, we are assigning the new-value to P(D_1|X_1) after the numbers have been divided by the sum of all the influencers.
-    set biased-d_1_given_x_1 ( new-biased-d_1_given_x_1 / number-of-influencers)
+    set agent-diag-value ( new-agent-diag-value / number-of-influencers)
   ]
 end
 
 to-report condition-verified [turtle1]
 
-  ; the condition is verified if the interval between the two player-beliefs is not too big
+  ; the condition is verified if the interval between the two agent-beliefs is not too big
 
   let reporter False
-  if abs(player-belief - [player-belief] of turtle1) < [agent-epsilon] of turtle1 [set reporter True]
+  if abs(agent-belief - [agent-belief] of turtle1) < [agent-epsilon] of turtle1 [set reporter True]
   report reporter
 end
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,,;;;;;;;;;;;;;;Check Stability;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
 
 to-report stable
   let reporter True
@@ -141,12 +153,16 @@ to-report stable
 end
 
 to-report is-right
-  report ifelse-value player-belief > .99 [True][False]
+  report ifelse-value agent-belief > .99 [True][False]
 end
 
 to-report is-wrong
-  report ifelse-value player-belief < .01 [True][False]
+  report ifelse-value agent-belief < .01 [True][False]
 end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;Reporters Final Results;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 to-report final-result
   let reporter "Polarization"
@@ -161,15 +177,15 @@ to-report final-result
 end
 
 to-report percentage-of-correct-scientists
-  report ( count turtles with [player-belief > 0.9] / number-of-agents)
+  report ( count turtles with [agent-belief > 0.9] / number-of-agents)
 end
 
 
 to-report consensus  [x]
   let reporter True
   ask turtles [
-    if x = 1 and player-belief < 0.99 [set reporter False]
-    if x = 2 and player-belief > 0.01 [set reporter False]
+    if x = 1 and agent-belief < 0.99 [set reporter False]
+    if x = 2 and agent-belief > 0.01 [set reporter False]
   ]
   report reporter
 end
@@ -196,8 +212,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-1
-1
+0
+0
 1
 -20
 20
@@ -267,7 +283,7 @@ number-of-agents
 number-of-agents
 0
 100
-25.0
+15.0
 1
 1
 NIL
@@ -304,38 +320,20 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot [biased-d_1_given_x_1] of turtle 0"
-"pen-1" 1.0 0 -7500403 true "" "plot [biased-d_1_given_x_1] of turtle 1"
-"pen-2" 1.0 0 -2674135 true "" "plot [biased-d_1_given_x_1] of turtle 2"
-"pen-3" 1.0 0 -955883 true "" "plot [biased-d_1_given_x_1] of turtle 3"
-"pen-4" 1.0 0 -6459832 true "" "plot [biased-d_1_given_x_1] of turtle 4"
-"pen-5" 1.0 0 -1184463 true "" "plot [biased-d_1_given_x_1] of turtle 5"
-"pen-6" 1.0 0 -10899396 true "" "plot [biased-d_1_given_x_1] of turtle 6"
-"pen-7" 1.0 0 -13840069 true "" "plot [biased-d_1_given_x_1] of turtle 7"
-"pen-8" 1.0 0 -14835848 true "" "plot [biased-d_1_given_x_1] of turtle 8"
-"pen-9" 1.0 0 -11221820 true "" "plot [biased-d_1_given_x_1] of turtle 9"
-"pen-10" 1.0 0 -13791810 true "" "plot [biased-d_1_given_x_1] of turtle 10"
-"pen-11" 1.0 0 -13345367 true "" "plot [biased-d_1_given_x_1] of turtle 11"
-"pen-12" 1.0 0 -8630108 true "" "plot [biased-d_1_given_x_1] of turtle 12"
-"pen-13" 1.0 0 -5825686 true "" "plot [biased-d_1_given_x_1] of turtle 13"
-"pen-14" 1.0 0 -2064490 true "" "plot [biased-d_1_given_x_1] of turtle 14"
-"pen-15" 1.0 0 -16777216 true "" "plot [biased-d_1_given_x_1] of turtle 15"
-"pen-16" 1.0 0 -16777216 true "" "plot [biased-d_1_given_x_1] of turtle 16"
-"pen-17" 1.0 0 -16777216 true "" "plot [biased-d_1_given_x_1] of turtle 17"
-"pen-18" 1.0 0 -16777216 true "" "plot [biased-d_1_given_x_1] of turtle 18"
-"pen-19" 1.0 0 -16777216 true "" "plot [biased-d_1_given_x_1] of turtle 19"
-"pen-20" 1.0 0 -16777216 true "" "plot [biased-d_1_given_x_1] of turtle 20"
-"pen-21" 1.0 0 -16777216 true "" "plot [biased-d_1_given_x_1] of turtle 21"
-"pen-22" 1.0 0 -16777216 true "" "plot [biased-d_1_given_x_1] of turtle 22"
-"pen-23" 1.0 0 -16777216 true "" "plot [biased-d_1_given_x_1] of turtle 23"
-"pen-24" 1.0 0 -16777216 true "" "plot [biased-d_1_given_x_1] of turtle 24"
-"pen-25" 1.0 0 -16777216 true "" "plot [biased-d_1_given_x_1] of turtle 25"
-"pen-26" 1.0 0 -16777216 true "" ""
-"pen-27" 1.0 0 -16777216 true "" ""
-"pen-28" 1.0 0 -16777216 true "" ""
-"pen-29" 1.0 0 -16777216 true "" ""
-"pen-30" 1.0 0 -16777216 true "" ""
-"pen-31" 1.0 0 -16777216 true "" ""
+"default" 1.0 0 -16777216 true "" "plot [agent-diag-value] of turtle 0"
+"pen-1" 1.0 0 -7500403 true "" "plot [agent-diag-value] of turtle 1"
+"pen-2" 1.0 0 -2674135 true "" "plot [agent-diag-value] of turtle 2"
+"pen-3" 1.0 0 -955883 true "" "plot [agent-diag-value] of turtle 3"
+"pen-4" 1.0 0 -6459832 true "" "plot [agent-diag-value] of turtle 4"
+"pen-5" 1.0 0 -1184463 true "" "plot [agent-diag-value] of turtle 5"
+"pen-6" 1.0 0 -10899396 true "" "plot [agent-diag-value] of turtle 6"
+"pen-7" 1.0 0 -13840069 true "" "plot [agent-diag-value] of turtle 7"
+"pen-8" 1.0 0 -14835848 true "" "plot [agent-diag-value] of turtle 8"
+"pen-9" 1.0 0 -11221820 true "" "plot [agent-diag-value] of turtle 9"
+"pen-10" 1.0 0 -13791810 true "" "plot [agent-diag-value] of turtle 10"
+"pen-11" 1.0 0 -13345367 true "" "plot [agent-diag-value] of turtle 11"
+"pen-12" 1.0 0 -8630108 true "" "plot [agent-diag-value] of turtle 12"
+"pen-13" 1.0 0 -5825686 true "" "plot [agent-diag-value] of turtle 13"
 
 MONITOR
 595
@@ -381,32 +379,22 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 0"
-"pen-1" 1.0 0 -7500403 true "" "plot [player-belief] of turtle 1"
-"pen-2" 1.0 0 -2674135 true "" "plot [player-belief] of turtle 2"
-"pen-3" 1.0 0 -955883 true "" "plot [player-belief] of turtle 3"
-"pen-4" 1.0 0 -6459832 true "" "plot [player-belief] of turtle 4"
-"pen-5" 1.0 0 -1184463 true "" "plot [player-belief] of turtle 5"
-"pen-6" 1.0 0 -10899396 true "" "plot [player-belief] of turtle 6"
-"pen-7" 1.0 0 -13840069 true "" "plot [player-belief] of turtle 7"
-"pen-8" 1.0 0 -14835848 true "" "plot [player-belief] of turtle 8"
-"pen-9" 1.0 0 -11221820 true "" "plot [player-belief] of turtle 9"
-"pen-10" 1.0 0 -13791810 true "" "plot [player-belief] of turtle 10"
-"pen-11" 1.0 0 -13345367 true "" "plot [player-belief] of turtle 11"
-"pen-12" 1.0 0 -8630108 true "" "plot [player-belief] of turtle 12"
-"pen-13" 1.0 0 -5825686 true "" "plot [player-belief] of turtle 13"
-"pen-14" 1.0 0 -2064490 true "" "plot [player-belief] of turtle 14"
-"pen-15" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 15"
-"pen-16" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 16"
-"pen-17" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 17"
-"pen-18" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 18"
-"pen-19" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 19"
-"pen-20" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 20"
-"pen-21" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 21"
-"pen-22" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 22"
-"pen-23" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 23"
-"pen-24" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 24"
-"pen-25" 1.0 0 -16777216 true "" "plot [player-belief] of turtle 25"
+"default" 1.0 0 -16777216 true "" "plot [agent-belief] of turtle 0"
+"pen-1" 1.0 0 -7500403 true "" "plot [agent-belief] of turtle 1"
+"pen-2" 1.0 0 -2674135 true "" "plot [agent-belief] of turtle 2"
+"pen-3" 1.0 0 -955883 true "" "plot [agent-belief] of turtle 3"
+"pen-4" 1.0 0 -6459832 true "" "plot [agent-belief] of turtle 4"
+"pen-5" 1.0 0 -1184463 true "" "plot [agent-belief] of turtle 5"
+"pen-6" 1.0 0 -10899396 true "" "plot [agent-belief] of turtle 6"
+"pen-7" 1.0 0 -13840069 true "" "plot [agent-belief] of turtle 7"
+"pen-8" 1.0 0 -14835848 true "" "plot [agent-belief] of turtle 8"
+"pen-9" 1.0 0 -11221820 true "" "plot [agent-belief] of turtle 9"
+"pen-10" 1.0 0 -13791810 true "" "plot [agent-belief] of turtle 10"
+"pen-11" 1.0 0 -13345367 true "" "plot [agent-belief] of turtle 11"
+"pen-12" 1.0 0 -8630108 true "" "plot [agent-belief] of turtle 12"
+"pen-13" 1.0 0 -5825686 true "" "plot [agent-belief] of turtle 13"
+"pen-14" 1.0 0 -2064490 true "" "plot [agent-belief] of turtle 14"
+"pen-15" 1.0 0 -16777216 true "" "plot [agent-belief] of turtle 15"
 
 SLIDER
 11
@@ -439,15 +427,15 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -8275240 true "" "plot count turtles with [player-belief > .99]"
+"default" 1.0 0 -8275240 true "" "plot percentage-of-correct-scientists"
 
 SLIDER
 12
 477
 207
 510
-initial-distance-diag-value
-initial-distance-diag-value
+initial-error-diag-value
+initial-error-diag-value
 0
 1
 0.38
@@ -480,7 +468,7 @@ connection-probability
 connection-probability
 0
 1
-0.2
+0.1
 0.1
 1
 NIL
