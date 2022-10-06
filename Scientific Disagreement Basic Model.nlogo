@@ -52,7 +52,7 @@ to go
   if stable [
     stop
   ]
-  if ticks > 20000 [
+  if ticks > 5000 and is-stuck? [
     stop
   ]
   tick
@@ -142,6 +142,11 @@ to-report condition-verified [turtle1]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,,;;;;;;;;;;;;;;Check Stability;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,
+
+to-report is-stuck?
+  report any? turtles with [(agent-diag-value >= d_1_given_x_2 - 0.01) and (agent-diag-value <= d_1_given_x_2 + 0.01)]
+end
+
 
 to-report stable
   let reporter True
@@ -268,7 +273,7 @@ d_1_given_x_1
 d_1_given_x_1
 0
 1
-0.41
+0.49
 0.01
 1
 NIL
@@ -283,7 +288,7 @@ number-of-agents
 number-of-agents
 0
 100
-15.0
+50.0
 1
 1
 NIL
@@ -298,7 +303,7 @@ epsilon
 epsilon
 0
 1
-0.66
+1.0
 0.01
 1
 NIL
@@ -438,7 +443,7 @@ initial-error-diag-value
 initial-error-diag-value
 0
 1
-0.38
+0.3
 0.01
 1
 NIL
@@ -453,7 +458,7 @@ total-data-points
 total-data-points
 0
 300
-180.0
+75.0
 1
 1
 NIL
@@ -468,7 +473,7 @@ connection-probability
 connection-probability
 0
 1
-0.1
+1.0
 0.1
 1
 NIL
@@ -870,11 +875,11 @@ NetLogo 6.2.0
       <value value="100"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="ExperimentCharitableOConn1Comparison" repetitions="100" sequentialRunOrder="false" runMetricsEveryStep="false">
+  <experiment name="ExperimentCharitableOConn1Comparison" repetitions="500" sequentialRunOrder="false" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <metric>final-result</metric>
-    <metric>count turtles with[player-belief &gt; .99]</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
     <metric>ticks</metric>
     <enumeratedValueSet variable="reality-noise">
       <value value="0.01"/>
@@ -920,6 +925,45 @@ NetLogo 6.2.0
     <enumeratedValueSet variable="reality-sensitivity-is-a-thing">
       <value value="true"/>
       <value value="false"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="ExperimentForSample0.49" repetitions="300" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="0.7"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.49"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.3"/>
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="25"/>
+      <value value="50"/>
+      <value value="75"/>
+      <value value="100"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
