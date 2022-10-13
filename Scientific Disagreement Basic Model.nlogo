@@ -12,10 +12,13 @@ turtles-own [
   number-of-influencers
   personal-evidence-piece
   agent-epsilon
+  agent-phi
   personal-successes-drawn
 ]
 
-globals[d_1_given_x_2]
+globals[d_1_given_x_2
+  diagnostic-values
+  beliefs]
 
 ;Globals and and individual variables will be explained when met inside the model.
 
@@ -39,7 +42,14 @@ to setup
     set size 1
     set shape "circle"
     set agent-epsilon epsilon ;Each agent has the same epsilon.
+    set agent-phi phi
   ]
+  set diagnostic-values [agent-diag-value] of turtles
+  ;set number-of-initial-wrong-agents count turtles with [agent-diag-value >  d_1_given_x_2 or agent-diag-value < (3 * d_1_given_x_1) - 1]
+  ;set number-of-initial-wrong-agents-above count turtles with [agent-diag-value >  d_1_given_x_2 ]
+  ;set number-of-initial-wrong-agents-below count turtles with [ agent-diag-value < (3 * d_1_given_x_1) - 1]
+
+
   reset-ticks
 end
 
@@ -55,6 +65,8 @@ to go
   if ticks > 5000 and is-stuck? [
     stop
   ]
+  set diagnostic-values [precision agent-diag-value 4] of turtles
+  set beliefs [precision agent-belief 4] of turtles
   tick
 end
 
@@ -133,11 +145,10 @@ to influence-each-other
 end
 
 to-report condition-verified [turtle1]
-
   ; the condition is verified if the interval between the two agent-beliefs is not too big
-
-  let reporter False
-  if abs(agent-belief - [agent-belief] of turtle1) < [agent-epsilon] of turtle1 [set reporter True]
+  let reporter True
+  if abs(agent-belief - [agent-belief] of turtle1) > [agent-epsilon] of turtle1 [set reporter False]
+  if abs(agent-diag-value - [agent-diag-value] of turtle1) > [agent-phi] of turtle1 [set reporter False]
   report reporter
 end
 
@@ -273,7 +284,7 @@ d_1_given_x_1
 d_1_given_x_1
 0
 1
-0.49
+0.45
 0.01
 1
 NIL
@@ -303,7 +314,7 @@ epsilon
 epsilon
 0
 1
-1.0
+0.5
 0.01
 1
 NIL
@@ -377,9 +388,9 @@ Factual Beliefs of the First 25 Agents
 NIL
 NIL
 0.0
-10.0
+100.0
 0.0
-1.0
+0.001
 true
 false
 "" ""
@@ -458,7 +469,7 @@ total-data-points
 total-data-points
 0
 300
-75.0
+50.0
 1
 1
 NIL
@@ -478,6 +489,43 @@ connection-probability
 1
 NIL
 HORIZONTAL
+
+SLIDER
+13
+54
+185
+87
+phi
+phi
+0
+1
+0.6
+0.1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+405
+461
+1338
+502
+NIL
+beliefs
+17
+1
+10
+
+MONITOR
+146
+403
+1339
+444
+NIL
+diagnostic-values
+17
+1
+10
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -963,6 +1011,566 @@ NetLogo 6.2.0
       <value value="25"/>
       <value value="50"/>
       <value value="75"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="ExperimentForCorrelationBis" repetitions="200" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>initial-diagnostic-values</metric>
+    <metric>number-of-initial-wrong-agents</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.3"/>
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="25"/>
+      <value value="50"/>
+      <value value="75"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="ExperimentForCorrelationFour" repetitions="500" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>initial-diagnostic-values</metric>
+    <metric>number-of-initial-wrong-agents</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.35"/>
+      <value value="0.4"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="25"/>
+      <value value="50"/>
+      <value value="75"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="ExperimentForCorrelationFive" repetitions="2000" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>initial-wrong-diagnostic-values</metric>
+    <metric>number-of-initial-wrong-agents</metric>
+    <metric>number-of-initial-wrong-agents-below</metric>
+    <metric>number-of-initial-wrong-agents-above</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.35"/>
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="25"/>
+      <value value="50"/>
+      <value value="75"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="ExperimentForCorrelationSix" repetitions="2000" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>initial-wrong-diagnostic-values</metric>
+    <metric>number-of-initial-wrong-agents</metric>
+    <metric>number-of-initial-wrong-agents-below</metric>
+    <metric>number-of-initial-wrong-agents-above</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.35"/>
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="25"/>
+      <value value="50"/>
+      <value value="75"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="NewExperimentDifferentCondition" repetitions="500" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>initial-wrong-diagnostic-values</metric>
+    <metric>number-of-initial-wrong-agents</metric>
+    <metric>number-of-initial-wrong-agents-below</metric>
+    <metric>number-of-initial-wrong-agents-above</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.35"/>
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="25"/>
+      <value value="50"/>
+      <value value="75"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="NewExperimentTwoConditions" repetitions="200" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>initial-wrong-diagnostic-values</metric>
+    <metric>number-of-initial-wrong-agents</metric>
+    <metric>number-of-initial-wrong-agents-below</metric>
+    <metric>number-of-initial-wrong-agents-above</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.35"/>
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="25"/>
+      <value value="50"/>
+      <value value="75"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="NewExperimentTwoConditionsBis" repetitions="200" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>initial-wrong-diagnostic-values</metric>
+    <metric>number-of-initial-wrong-agents</metric>
+    <metric>number-of-initial-wrong-agents-below</metric>
+    <metric>number-of-initial-wrong-agents-above</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.35"/>
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0.1"/>
+      <value value="0.5"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="25"/>
+      <value value="50"/>
+      <value value="75"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="NewExperimentTwoConditionsFive" repetitions="100" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>initial-wrong-diagnostic-values</metric>
+    <metric>number-of-initial-wrong-agents</metric>
+    <metric>number-of-initial-wrong-agents-below</metric>
+    <metric>number-of-initial-wrong-agents-above</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.35"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0"/>
+      <value value="0.2"/>
+      <value value="0.4"/>
+      <value value="0.6"/>
+      <value value="0.8"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0"/>
+      <value value="0.2"/>
+      <value value="0.4"/>
+      <value value="0.6"/>
+      <value value="0.8"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="50"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="NewExperimentTwoConditionsNight" repetitions="100" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>initial-wrong-diagnostic-values</metric>
+    <metric>number-of-initial-wrong-agents</metric>
+    <metric>number-of-initial-wrong-agents-below</metric>
+    <metric>number-of-initial-wrong-agents-above</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.35"/>
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="50"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="NewExperimentTwoConditionsNight" repetitions="100" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>beliefs</metric>
+    <metric>diagnostic-values</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.45"/>
+      <value value="0.35"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="50"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="NewExperimentTwoConditionsNightBis" repetitions="100" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>initial-wrong-diagnostic-values</metric>
+    <metric>number-of-initial-wrong-agents</metric>
+    <metric>number-of-initial-wrong-agents-below</metric>
+    <metric>number-of-initial-wrong-agents-above</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.4"/>
+      <value value="0.3"/>
+      <value value="0.25"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="50"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="NewExperimentTwoConditionsNightFour" repetitions="100" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>beliefs</metric>
+    <metric>diagnostic-values</metric>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.4"/>
+      <value value="0.3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="50"/>
       <value value="100"/>
     </enumeratedValueSet>
   </experiment>
