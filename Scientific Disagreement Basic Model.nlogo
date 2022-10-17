@@ -18,7 +18,9 @@ turtles-own [
 
 globals[d_1_given_x_2
   diagnostic-values
-  beliefs]
+  beliefs
+  evidence
+]
 
 ;Globals and and individual variables will be explained when met inside the model.
 
@@ -48,7 +50,7 @@ to setup
   ;set number-of-initial-wrong-agents count turtles with [agent-diag-value >  d_1_given_x_2 or agent-diag-value < (3 * d_1_given_x_1) - 1]
   ;set number-of-initial-wrong-agents-above count turtles with [agent-diag-value >  d_1_given_x_2 ]
   ;set number-of-initial-wrong-agents-below count turtles with [ agent-diag-value < (3 * d_1_given_x_1) - 1]
-
+  set evidence []
 
   reset-ticks
 end
@@ -58,15 +60,14 @@ to go
   ;3) The program checks if the run is stable. If it is it generates results and then stops.
   draw-evidence-and-update-belief
   influence-each-other
-
+  set diagnostic-values [precision agent-diag-value 4] of turtles
+  set beliefs [precision agent-belief 4] of turtles
   if stable [
     stop
   ]
   if ticks > 5000 and is-stuck? [
     stop
   ]
-  set diagnostic-values [precision agent-diag-value 4] of turtles
-  set beliefs [precision agent-belief 4] of turtles
   tick
 end
 
@@ -79,6 +80,7 @@ to draw-evidence-and-update-belief
 
   ifelse total-data-points > 0 [
     let total-successes-drawn random-binomial total-data-points (d_1_given_x_1)
+    set evidence lput total-successes-drawn evidence
     ask turtles [
       update-belief-multiple-draws total-successes-drawn total-data-points
     ]
@@ -114,8 +116,7 @@ to update-belief-multiple-draws [successes-drawn data-points]
 
   let p_D P_D_1 * agent-belief + p_D_2 * (1 - agent-belief) ; Calculate P(data). Law of total probability.
 
-  set agent-belief (P_D_1 * agent-belief / P_D)
-
+  if not (p_D = 0) [set agent-belief (P_D_1 * agent-belief / P_D)]
   set color (red + (5 * (agent-belief - 0.5)))
 
 end
@@ -140,13 +141,21 @@ to influence-each-other
 
   ask turtles [
     ;Here, we are assigning the new-value to P(D_1|X_1) after the numbers have been divided by the sum of all the influencers.
-    set agent-diag-value ( new-agent-diag-value / number-of-influencers)
+    set new-agent-diag-value (new-agent-diag-value / number-of-influencers)
+    ifelse re-evaluation and not ( are-equals? new-agent-diag-value agent-diag-value ) [
+      ;print("reevalutaing")
+      set agent-diag-value new-agent-diag-value
+      re-evaluate
+    ][
+      set agent-diag-value new-agent-diag-value
+    ]
   ]
 end
 
 to-report condition-verified [turtle1]
   ; the condition is verified if the interval between the two agent-beliefs is not too big
   let reporter True
+  ;if agent-epsilon = 0 or agent-phi = 0 [set reporter False]
   if abs(agent-belief - [agent-belief] of turtle1) > [agent-epsilon] of turtle1 [set reporter False]
   if abs(agent-diag-value - [agent-diag-value] of turtle1) > [agent-phi] of turtle1 [set reporter False]
   report reporter
@@ -209,6 +218,20 @@ end
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PRODUCE DATA POINTS;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+to re-evaluate
+  let data-points ( length(evidence) * total-data-points )
+  let successes reduce + evidence
+  set agent-belief 0.5
+  update-belief-multiple-draws successes data-points
+end
+
+to-report are-equals? [x y]
+  let reporter True
+  if (x > y + 0.001) or ( x < y - 0.001) [set reporter False]
+  report reporter
+end
+
 
 to-report random-binomial [n p]
   report reduce + (n-values n [ifelse-value (p > random-float 1) [1] [0]])
@@ -299,7 +322,7 @@ number-of-agents
 number-of-agents
 0
 100
-50.0
+100.0
 1
 1
 NIL
@@ -314,7 +337,7 @@ epsilon
 epsilon
 0
 1
-0.5
+0.27
 0.01
 1
 NIL
@@ -381,9 +404,9 @@ NIL
 
 PLOT
 240
-263
+265
 585
-521
+523
 Factual Beliefs of the First 25 Agents
 NIL
 NIL
@@ -454,7 +477,7 @@ initial-error-diag-value
 initial-error-diag-value
 0
 1
-0.3
+0.15
 0.01
 1
 NIL
@@ -469,7 +492,7 @@ total-data-points
 total-data-points
 0
 300
-50.0
+100.0
 1
 1
 NIL
@@ -499,14 +522,14 @@ phi
 phi
 0
 1
-0.6
+0.7
 0.1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-405
+590
 461
 1338
 502
@@ -517,13 +540,35 @@ beliefs
 10
 
 MONITOR
-146
+590
 403
 1339
 444
 NIL
 diagnostic-values
 17
+1
+10
+
+SWITCH
+10
+321
+139
+354
+re-evaluation
+re-evaluation
+0
+1
+-1000
+
+MONITOR
+607
+11
+1287
+52
+NIL
+evidence
+1
 1
 10
 
@@ -1538,6 +1583,124 @@ NetLogo 6.2.0
     <enumeratedValueSet variable="initial-error-diag-value">
       <value value="0.4"/>
       <value value="0.3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="50"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="NewGenerationExperiment" repetitions="200" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>beliefs</metric>
+    <metric>diagnostic-values</metric>
+    <enumeratedValueSet variable="re-evaluation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.45"/>
+      <value value="0.35"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="50"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="NewGenerationExperimentTwo" repetitions="200" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>count turtles with[agent-belief &gt; .99]</metric>
+    <metric>ticks</metric>
+    <metric>beliefs</metric>
+    <metric>diagnostic-values</metric>
+    <enumeratedValueSet variable="re-evaluation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="initial-error-diag-value">
+      <value value="0.25"/>
+      <value value="0.15"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="epsilon">
       <value value="0"/>
