@@ -21,7 +21,7 @@ globals[d_1_given_x_2
   diagnostic-values
   beliefs
   evidence
-  initial-error-diag-value
+  final-distribution
 ]
 
 ;Globals and and individual variables will be explained when met inside the model.
@@ -34,7 +34,6 @@ to setup
 
     set initial-belief ifelse-value random-start [random-float 1][0.5]
     set agent-belief initial-belief                         ; probability that each agent assigns to the possibility of X_1 being the true class of the world. Notably, X_1 is the true class of the world.
-    set initial-error-diag-value lambda * d_1_given_x_1
     if initial-error-diag-value + d_1_given_x_1 > 1 [set initial-error-diag-value 1 - d_1_given_x_1]
     if d_1_given_x_1 - initial-error-diag-value < 0 [set initial-error-diag-value  d_1_given_x_1]
 
@@ -72,6 +71,7 @@ to go
   influence-each-other
   set diagnostic-values [precision agent-diag-value 4] of turtles
   set beliefs [precision agent-belief 4] of turtles
+  set final-distribution final-result
   tick
 end
 
@@ -481,7 +481,7 @@ lambda
 lambda
 0
 1
-0.4
+0.35
 0.1
 1
 NIL
