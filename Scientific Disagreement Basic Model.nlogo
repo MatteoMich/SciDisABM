@@ -17,7 +17,7 @@ turtles-own [
   personal-successes-drawn
 ]
 
-globals[d_1_given_x_2
+globals[d_1_given_x_1
   diagnostic-values
   beliefs
   evidence
@@ -28,7 +28,7 @@ globals[d_1_given_x_2
 
 to setup
   ca
-  set d_1_given_x_2 1 - d_1_given_x_1
+  set d_1_given_x_1 0.5 ; 1 - d_1_given_x_1
 
   nw:generate-random turtles links number-of-agents connection-probability [
 
@@ -238,6 +238,7 @@ end
 
 
 to-report random-binomial [n p]
+  ;report round(n * p)
   report reduce + (n-values n [ifelse-value (p > random-float 1) [1] [0]])
 end
 @#$#@#$#@
@@ -307,11 +308,11 @@ SLIDER
 212
 183
 245
-d_1_given_x_1
-d_1_given_x_1
+d_1_given_x_2
+d_1_given_x_2
 0
 1
-0.15
+0.5
 0.01
 1
 NIL
@@ -326,7 +327,7 @@ number-of-agents
 number-of-agents
 0
 100
-100.0
+50.0
 1
 1
 NIL
@@ -341,7 +342,7 @@ epsilon
 epsilon
 0
 1
-0.0
+0.3
 0.01
 1
 NIL
@@ -415,7 +416,7 @@ Factual Beliefs of the First 25 Agents
 NIL
 NIL
 0.0
-100.0
+1.0
 0.0
 0.001
 true
@@ -481,8 +482,8 @@ lambda
 lambda
 0
 1
-0.4
-0.1
+0.5
+0.05
 1
 NIL
 HORIZONTAL
@@ -496,7 +497,7 @@ total-data-points
 total-data-points
 0
 300
-5.0
+75.0
 1
 1
 NIL
@@ -586,17 +587,6 @@ random-start
 1
 1
 -1000
-
-MONITOR
-704
-356
-806
-401
-NIL
-final-distribution
-17
-1
-11
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -2046,6 +2036,220 @@ NetLogo 6.2.0
     <enumeratedValueSet variable="total-data-points">
       <value value="5"/>
       <value value="50"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="BigExperimentDifferentAss" repetitions="500" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>beliefs</metric>
+    <metric>diagnostic-values</metric>
+    <enumeratedValueSet variable="re-evaluation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="lambda">
+      <value value="0"/>
+      <value value="0.25"/>
+      <value value="0.5"/>
+      <value value="0.75"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0.1"/>
+      <value value="0.3"/>
+      <value value="0.5"/>
+      <value value="0.7"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0.1"/>
+      <value value="0.3"/>
+      <value value="0.5"/>
+      <value value="0.7"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="random-start">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="25"/>
+      <value value="50"/>
+      <value value="75"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="BigExperimentFocusedDifferentAss" repetitions="1000" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>beliefs</metric>
+    <metric>diagnostic-values</metric>
+    <enumeratedValueSet variable="re-evaluation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="lambda">
+      <value value="0"/>
+      <value value="0.25"/>
+      <value value="0.5"/>
+      <value value="0.75"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0.3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0.1"/>
+      <value value="0.3"/>
+      <value value="0.5"/>
+      <value value="0.7"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="random-start">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="25"/>
+      <value value="50"/>
+      <value value="75"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="BigExperimentFocused2" repetitions="500" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>beliefs</metric>
+    <metric>diagnostic-values</metric>
+    <enumeratedValueSet variable="re-evaluation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="lambda">
+      <value value="0"/>
+      <value value="0.25"/>
+      <value value="0.5"/>
+      <value value="0.75"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0"/>
+      <value value="0.1"/>
+      <value value="0.2"/>
+      <value value="0.3"/>
+      <value value="0.4"/>
+      <value value="0.5"/>
+      <value value="0.6"/>
+      <value value="0.7"/>
+      <value value="0.8"/>
+      <value value="0.9"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="random-start">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="50"/>
+      <value value="100"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="BigExperimentFixed EvidenceComparison" repetitions="500" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>final-result</metric>
+    <metric>beliefs</metric>
+    <metric>diagnostic-values</metric>
+    <enumeratedValueSet variable="re-evaluation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="lambda">
+      <value value="0"/>
+      <value value="0.25"/>
+      <value value="0.5"/>
+      <value value="0.75"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-agents">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="connection-probability">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="d_1_given_x_1">
+      <value value="0.45"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="phi">
+      <value value="0.3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="epsilon">
+      <value value="0.1"/>
+      <value value="0.3"/>
+      <value value="0.5"/>
+      <value value="0.7"/>
+      <value value="0.9"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="samples">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="random-start">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="total-data-points">
+      <value value="5"/>
+      <value value="25"/>
+      <value value="50"/>
+      <value value="75"/>
       <value value="100"/>
     </enumeratedValueSet>
   </experiment>
